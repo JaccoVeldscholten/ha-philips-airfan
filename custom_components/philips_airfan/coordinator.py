@@ -186,13 +186,13 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         endpoint = mqtt_info["endpoint"]
 
         _LOGGER.debug("Connecting to MQTT WebSocket at %s", endpoint)
-        ssl_context = ssl.create_default_context()
+        ssl_context = await self.hass.async_add_executor_job(ssl.create_default_context)
 
         async with websockets.connect(
             ws_url,
             subprotocols=["mqtt"],
             ssl=ssl_context,
-            extra_headers={"Host": endpoint},
+            additional_headers={"Host": endpoint},
             ping_interval=None,
             close_timeout=5,
         ) as ws:
