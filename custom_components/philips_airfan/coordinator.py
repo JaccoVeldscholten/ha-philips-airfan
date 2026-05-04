@@ -192,7 +192,6 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ws_url,
             subprotocols=["mqtt"],
             ssl=ssl_context,
-            additional_headers={"Host": endpoint},
             ping_interval=None,
             close_timeout=5,
         ) as ws:
