@@ -40,7 +40,10 @@ class PhilipsAirFanEntity(CoordinatorEntity[PhilipsAirFanCoordinator], FanEntity
     _attr_has_entity_name = True
     _attr_name = None
     _attr_supported_features = (
-        FanEntityFeature.PRESET_MODE | FanEntityFeature.OSCILLATE
+        FanEntityFeature.TURN_ON
+        | FanEntityFeature.TURN_OFF
+        | FanEntityFeature.PRESET_MODE
+        | FanEntityFeature.OSCILLATE
     )
     _attr_preset_modes = list(PRESET_MODES.keys())
 
