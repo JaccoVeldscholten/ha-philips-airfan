@@ -1,0 +1,11 @@
+{
+  "domain": "philips_airfan",
+  "name": "Philips Air Fan",
+  "codeowners": ["@jacco"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/jacco/ha-philips-airfan",
+  "iot_class": "cloud_push",
+  "requirements": ["websockets>=12.0"],
+  "version": "0.1.0"
+}

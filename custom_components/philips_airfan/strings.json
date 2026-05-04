@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Philips Air Fan",
+        "description": "Enter your Philips Air API token. See the documentation for instructions on how to obtain one.",
+        "data": {
+          "token": "API Token (JWT)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Philips Air Fan",
+        "description": "Your token has expired. Please enter a new token.",
+        "data": {
+          "token": "New API Token (JWT)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid token. Please check your token and try again.",
+      "cannot_connect": "Cannot connect to Philips API. Please try again later.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "reauth_successful": "Re-authentication successful."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": { "name": "Temperature" },
+      "timer_remaining": { "name": "Timer remaining" },
+      "power_state": { "name": "Power state" },
+      "mode_raw": { "name": "Mode (raw)" },
+      "speed_level": { "name": "Speed level" },
+      "oscillation_raw": { "name": "Oscillation (raw)" },
+      "timer_setting": { "name": "Timer setting" },
+      "display_brightness": { "name": "Display brightness" },
+      "standby_flag": { "name": "Standby flag" }
+    }
+  }
+}

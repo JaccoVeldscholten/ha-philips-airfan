@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Philips Air Ventilator",
+        "description": "Voer je Philips Air API-token in. Zie de documentatie voor instructies om een token te verkrijgen.",
+        "data": {
+          "token": "API Token (JWT)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Opnieuw inloggen bij Philips Air Ventilator",
+        "description": "Je token is verlopen. Voer een nieuw token in.",
+        "data": {
+          "token": "Nieuw API Token (JWT)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ongeldig token. Controleer je token en probeer opnieuw.",
+      "cannot_connect": "Kan geen verbinding maken met Philips API. Probeer het later opnieuw.",
+      "unknown": "Er is een onverwachte fout opgetreden."
+    },
+    "abort": {
+      "already_configured": "Dit apparaat is al geconfigureerd.",
+      "reauth_successful": "Opnieuw inloggen gelukt."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": { "name": "Temperatuur" },
+      "timer_remaining": { "name": "Timer resterend" },
+      "power_state": { "name": "Aan/uit status" },
+      "mode_raw": { "name": "Modus (raw)" },
+      "speed_level": { "name": "Snelheidsniveau" },
+      "oscillation_raw": { "name": "Oscillatie (raw)" },
+      "timer_setting": { "name": "Timer instelling" },
+      "display_brightness": { "name": "Displayhelderheid" },
+      "standby_flag": { "name": "Standby status" }
+    }
+  }
+}
