@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac as hmac_mod
 import json
 import logging
 import ssl
 import time
 from typing import Any
+from urllib.parse import quote
 
 import aiohttp
 import websockets
@@ -18,16 +21,25 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     API_HOST,
     APP_ID,
+    APP_SECRET,
+    CLIENT_ID,
+    CLIENT_SECRET,
     CONF_DEVICE_ID,
     CONF_ENDUSER_ID,
+    CONF_REFRESH_TOKEN,
     CONF_TOKEN,
+    CONF_TOKEN_EXPIRY,
+    CONF_USERNAME,
     DOMAIN,
+    TOKEN_URL,
+    USERINFO_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 MQTT_RECONNECT_INTERVAL = 30
 MQTT_URL_LIFETIME = 3500  # Refresh URL before 1h expiry (presigned URL valid 1h)
+TOKEN_REFRESH_MARGIN = 86400  # Refresh when less than 24h remaining
 
 
 def _encode_remaining_length(length: int) -> bytes:
@@ -105,9 +117,13 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize."""
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=None)
+        self._entry = entry
         self._token: str = entry.data[CONF_TOKEN]
         self._device_id: str = entry.data[CONF_DEVICE_ID]
         self._enduser_id: str = entry.data[CONF_ENDUSER_ID]
+        self._refresh_token: str | None = entry.data.get(CONF_REFRESH_TOKEN)
+        self._token_expiry: float = entry.data.get(CONF_TOKEN_EXPIRY, 0)
+        self._username: str | None = entry.data.get(CONF_USERNAME)
         self._ws: websockets.WebSocketClientProtocol | None = None
         self._task: asyncio.Task | None = None
         self._ping_task: asyncio.Task | None = None
@@ -127,6 +143,106 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Return current data (populated by MQTT push)."""
         return self.data or {}
+
+    async def _ensure_valid_token(self) -> None:
+        """Check if JWT is near expiry and refresh if possible."""
+        if not self._refresh_token:
+            return  # No refresh token available, can't auto-refresh
+
+        now = time.time()
+        if self._token_expiry and (self._token_expiry - now) > TOKEN_REFRESH_MARGIN:
+            return  # Token still has more than 24h remaining
+
+        _LOGGER.info("JWT token nearing expiry, attempting automatic refresh")
+        try:
+            new_token, new_expiry = await self._refresh_jwt()
+            self._token = new_token
+            self._token_expiry = new_expiry
+
+            # Persist new tokens in config entry
+            new_data = {**self._entry.data, CONF_TOKEN: new_token, CONF_TOKEN_EXPIRY: new_expiry}
+            self.hass.config_entries.async_update_entry(self._entry, data=new_data)
+            _LOGGER.info("JWT token refreshed successfully, valid until %s", time.ctime(new_expiry))
+        except Exception:
+            _LOGGER.exception(
+                "Failed to refresh JWT token automatically. "
+                "Will trigger re-authentication if token becomes invalid."
+            )
+
+    async def _refresh_jwt(self) -> tuple[str, float]:
+        """Use OAuth refresh_token to obtain a fresh JWT.
+
+        Flow:
+        1. refresh_token → new access_token
+        2. access_token → userinfo → sub → username
+        3. serverTime → timestamp
+        4. HMAC signature → POST getToken → new JWT
+        """
+        async with aiohttp.ClientSession() as session:
+            # Step 1: Refresh OAuth access token
+            data = {
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "grant_type": "refresh_token",
+                "refresh_token": self._refresh_token,
+            }
+            async with session.post(TOKEN_URL, data=data) as resp:
+                if resp.status != 200:
+                    body = await resp.text()
+                    raise TokenRefreshError(f"OAuth token refresh failed ({resp.status}): {body}")
+                tokens = await resp.json()
+                access_token = tokens["access_token"]
+                # Update refresh_token if a new one was issued
+                if "refresh_token" in tokens:
+                    self._refresh_token = tokens["refresh_token"]
+                    new_data = {**self._entry.data, CONF_REFRESH_TOKEN: self._refresh_token}
+                    self.hass.config_entries.async_update_entry(self._entry, data=new_data)
+
+            # Step 2: Get username from userinfo
+            headers = {"Authorization": f"Bearer {access_token}"}
+            async with session.get(USERINFO_URL, headers=headers) as resp:
+                if resp.status != 200:
+                    raise TokenRefreshError(f"Userinfo request failed ({resp.status})")
+                userinfo = await resp.json()
+                sub = userinfo["sub"]
+                username = f"PHILIPS:{sub}"
+
+            # Step 3: Get server timestamp
+            async with session.get(f"{API_HOST}/device/serverTime/") as resp:
+                time_data = await resp.json()
+                timestamp = time_data["data"]["timestamp2"]
+
+            # Step 4: Compute HMAC signature and get JWT
+            fmt = f"app_id={APP_ID}&timestamp={timestamp}&username={quote(username)}"
+            hmac1 = hmac_mod.new(APP_SECRET.encode(), fmt.encode(), hashlib.sha256).hexdigest()
+            signature = hmac_mod.new(username.encode(), hmac1.encode(), hashlib.sha256).hexdigest()
+
+            fog_headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "Signature": signature,
+            }
+            fog_data = {"username": username, "timestamp": timestamp, "app_id": APP_ID}
+
+            async with session.post(
+                f"{API_HOST}/enduser/v2/getToken/", json=fog_data, headers=fog_headers
+            ) as resp:
+                result = await resp.json()
+
+            if result.get("meta", {}).get("code") != 0:
+                # Fallback: try login endpoint without signature
+                _LOGGER.debug("getToken with signature failed, trying login endpoint")
+                login_data = {"username": username, "app_id": APP_ID}
+                async with session.put(
+                    f"{API_HOST}/enduser/login/", json=login_data
+                ) as resp:
+                    result = await resp.json()
+                if result.get("meta", {}).get("code") != 0:
+                    raise TokenRefreshError(f"Both getToken and login endpoints failed: {result}")
+
+            new_jwt = result["data"]["token"]
+            # JWT valid for 7 days
+            new_expiry = time.time() + 7 * 86400
+            return new_jwt, new_expiry
 
     async def _get_mqtt_info(self) -> dict[str, Any]:
         """Get MQTT WebSocket info from API."""
@@ -161,9 +277,10 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self._run_mqtt_session()
             except InvalidToken:
                 _LOGGER.error(
-                    "JWT token is invalid or expired. Please reconfigure the integration with a new token."
+                    "JWT token is invalid or expired. Triggering re-authentication."
                 )
                 self._connected = False
+                self._entry.async_start_reauth(self.hass)
                 return  # Stop retrying on auth error
             except Exception:
                 _LOGGER.exception(
@@ -180,6 +297,7 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _run_mqtt_session(self) -> None:
         """Single MQTT session."""
+        await self._ensure_valid_token()
         mqtt_info = await self._get_mqtt_info()
         ws_url = mqtt_info["host"]
         client_id = mqtt_info["client_id"]
@@ -325,3 +443,7 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
 class InvalidToken(Exception):
     """Raised when JWT token is expired or invalid."""
+
+
+class TokenRefreshError(Exception):
+    """Raised when automatic token refresh fails."""

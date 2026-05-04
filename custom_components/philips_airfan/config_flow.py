@@ -16,7 +16,9 @@ from .const import (
     CONF_DEVICE_MODEL,
     CONF_DEVICE_NAME,
     CONF_ENDUSER_ID,
+    CONF_REFRESH_TOKEN,
     CONF_TOKEN,
+    CONF_TOKEN_EXPIRY,
     CONF_USERNAME,
     DOMAIN,
 )
@@ -32,11 +34,12 @@ class PhilipsAirFanConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step: user provides JWT token."""
+        """Handle the initial step: user provides JWT token and optional refresh token."""
         errors = {}
 
         if user_input is not None:
             token = user_input[CONF_TOKEN].strip()
+            refresh_token = user_input.get(CONF_REFRESH_TOKEN, "").strip() or None
 
             # Validate token by calling deviceList
             try:
@@ -53,21 +56,33 @@ class PhilipsAirFanConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(f"philips_airfan_{device_id}")
                 self._abort_if_unique_id_configured()
 
+                import time
+
+                entry_data = {
+                    CONF_TOKEN: token,
+                    CONF_DEVICE_ID: device_id,
+                    CONF_USERNAME: device_info["username"],
+                    CONF_ENDUSER_ID: device_info["enduser_id"],
+                    CONF_DEVICE_NAME: device_info.get("name", "Philips Air Fan"),
+                    CONF_DEVICE_MODEL: device_info.get("model", "Unknown"),
+                    CONF_TOKEN_EXPIRY: time.time() + 7 * 86400,
+                }
+                if refresh_token:
+                    entry_data[CONF_REFRESH_TOKEN] = refresh_token
+
                 return self.async_create_entry(
                     title=device_info.get("name", "Philips Air Fan"),
-                    data={
-                        CONF_TOKEN: token,
-                        CONF_DEVICE_ID: device_id,
-                        CONF_USERNAME: device_info["username"],
-                        CONF_ENDUSER_ID: device_info["enduser_id"],
-                        CONF_DEVICE_NAME: device_info.get("name", "Philips Air Fan"),
-                        CONF_DEVICE_MODEL: device_info.get("model", "Unknown"),
-                    },
+                    data=entry_data,
                 )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_TOKEN): str}),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_TOKEN): str,
+                    vol.Optional(CONF_REFRESH_TOKEN, default=""): str,
+                }
+            ),
             errors=errors,
         )
 
@@ -85,6 +100,7 @@ class PhilipsAirFanConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             token = user_input[CONF_TOKEN].strip()
+            refresh_token = user_input.get(CONF_REFRESH_TOKEN, "").strip() or None
             try:
                 await self._validate_token(token)
             except InvalidAuth:
@@ -98,16 +114,28 @@ class PhilipsAirFanConfigFlow(ConfigFlow, domain=DOMAIN):
                     self.context["entry_id"]
                 )
                 if entry:
-                    self.hass.config_entries.async_update_entry(
-                        entry, data={**entry.data, CONF_TOKEN: token}
-                    )
+                    import time
+
+                    new_data = {
+                        **entry.data,
+                        CONF_TOKEN: token,
+                        CONF_TOKEN_EXPIRY: time.time() + 7 * 86400,
+                    }
+                    if refresh_token:
+                        new_data[CONF_REFRESH_TOKEN] = refresh_token
+                    self.hass.config_entries.async_update_entry(entry, data=new_data)
                     await self.hass.config_entries.async_reload(entry.entry_id)
                     return self.async_abort(reason="reauth_successful")
                 return self.async_abort(reason="unknown")
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=vol.Schema({vol.Required(CONF_TOKEN): str}),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_TOKEN): str,
+                    vol.Optional(CONF_REFRESH_TOKEN, default=""): str,
+                }
+            ),
             errors=errors,
         )
 

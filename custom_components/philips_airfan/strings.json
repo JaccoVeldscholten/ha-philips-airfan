@@ -3,16 +3,18 @@
     "step": {
       "user": {
         "title": "Philips Air Fan",
-        "description": "Enter your Philips Air API token. See the documentation for instructions on how to obtain one.",
+        "description": "Enter your Philips Air API token. Optionally provide the OAuth refresh token for automatic renewal. Run get_token.py to obtain both.",
         "data": {
-          "token": "API Token (JWT)"
+          "token": "API Token (JWT)",
+          "refresh_token": "Refresh Token (optional, for auto-renewal)"
         }
       },
       "reauth_confirm": {
         "title": "Re-authenticate Philips Air Fan",
-        "description": "Your token has expired. Please enter a new token.",
+        "description": "Your token has expired. Please enter a new token. Provide a refresh token to enable automatic renewal.",
         "data": {
-          "token": "New API Token (JWT)"
+          "token": "New API Token (JWT)",
+          "refresh_token": "Refresh Token (optional, for auto-renewal)"
         }
       }
     },

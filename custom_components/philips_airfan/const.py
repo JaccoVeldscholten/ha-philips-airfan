@@ -5,8 +5,17 @@ DOMAIN = "philips_airfan"
 API_HOST = "https://www.api.air.philips.com"
 APP_ID = "9fd505fa9c7111e9a1e3061302926720"
 
+# OAuth / Token refresh constants
+CLIENT_ID = "-XsK7O6iEkLml77yDGDUi0ku"
+CLIENT_SECRET = "V34BlAhuilIdOx0Imo16rGQ2"  # noqa: S105  # Public app credential
+TOKEN_URL = "https://cdc.accounts.home.id/oidc/op/v1.0/4_JGZWlP8eQHpEqkvQElolbA/oauth/token"
+USERINFO_URL = "https://cdc.accounts.home.id/oidc/op/v1.0/4_JGZWlP8eQHpEqkvQElolbA/userinfo"
+APP_SECRET = f"a_{APP_ID}"
+
 # Config entry keys
 CONF_TOKEN = "token"
+CONF_REFRESH_TOKEN = "refresh_token"
+CONF_TOKEN_EXPIRY = "token_expiry"
 CONF_DEVICE_ID = "device_id"
 CONF_USERNAME = "username"
 CONF_ENDUSER_ID = "enduser_id"

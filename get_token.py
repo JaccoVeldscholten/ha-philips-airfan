@@ -126,8 +126,12 @@ async def get_auth_code(auth_url: str) -> str | None:
     return redirect_url.split("code=")[1].split("&")[0]
 
 
-async def exchange_code(code: str, verifier: str) -> str:
-    """Exchange OAuth code for Philips access token, then get cloud JWT."""
+async def exchange_code(code: str, verifier: str) -> tuple[str, str]:
+    """Exchange OAuth code for Philips access token, then get cloud JWT.
+
+    Returns (jwt_token, refresh_token).
+    """
+    refresh_token = ""
     async with aiohttp.ClientSession() as session:
         # Step 1: Exchange code for Philips access token
         data = {
@@ -143,6 +147,7 @@ async def exchange_code(code: str, verifier: str) -> str:
             if resp.status != 200:
                 raise Exception(f"Token exchange failed: {resp.status}\n{json.dumps(tokens, indent=2)}")
             access_token = tokens["access_token"]
+            refresh_token = tokens.get("refresh_token", "")
             print("✅ Philips OAuth token obtained")
 
         # Step 2: Get user info to find username
@@ -199,7 +204,7 @@ async def exchange_code(code: str, verifier: str) -> str:
                     if result2.get("meta", {}).get("code") == 0:
                         token = result2["data"]["token"]
                         print("✅ Got JWT token via login endpoint")
-                        return token
+                        return token, refresh_token
                     else:
                         raise Exception(
                             f"Could not obtain JWT token.\n"
@@ -211,7 +216,7 @@ async def exchange_code(code: str, verifier: str) -> str:
             else:
                 token = result["data"]["token"]
                 print("✅ Got JWT token via getToken endpoint")
-                return token
+                return token, refresh_token
 
 
 async def main():
@@ -241,7 +246,7 @@ async def main():
     print(f"✅ OAuth code received")
 
     try:
-        token = await exchange_code(code, verifier)
+        token, refresh_token = await exchange_code(code, verifier)
     except Exception as e:
         print(f"\n❌ Error: {e}")
         return
@@ -250,9 +255,17 @@ async def main():
     print("  YOUR JWT TOKEN (copy this into Home Assistant):")
     print("=" * 60)
     print(f"\n{token}\n")
+    if refresh_token:
+        print("=" * 60)
+        print("  YOUR REFRESH TOKEN (paste in 'Refresh token' field for auto-renewal):")
+        print("=" * 60)
+        print(f"\n{refresh_token}\n")
     print("=" * 60)
-    print("  Token is valid for approximately 7 days.")
-    print("  Add the Philips Air Fan integration in HA and paste this token.")
+    print("  JWT token is valid for approximately 7 days.")
+    if refresh_token:
+        print("  With the refresh token, Home Assistant will renew it automatically.")
+    else:
+        print("  Add the Philips Air Fan integration in HA and paste this token.")
     print("=" * 60)
 
 
