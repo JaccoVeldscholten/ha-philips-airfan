@@ -62,9 +62,9 @@ python3 get_token.py
 This will:
 1. Open a browser window
 2. You log in with your Philips Air+ account
-3. The script automatically obtains and prints your JWT token
+3. The script automatically obtains and prints your JWT token **and refresh token**
 
-That's it! Copy the token and paste it into Home Assistant.
+That's it! Copy both tokens and paste them into Home Assistant. The refresh token enables automatic renewal so you never have to do this again.
 
 ### Step 2: Add the integration
 
@@ -75,11 +75,12 @@ That's it! Copy the token and paste it into Home Assistant.
 
 ### Token Renewal
 
-When your token expires (after ~7 days), the integration will become unavailable. To fix:
+**Automatic (recommended):** If you provide the refresh token during setup, the integration will automatically renew the JWT token before it expires. No manual intervention needed!
 
+**Manual fallback:** If no refresh token is provided, or if automatic refresh fails:
 1. Run `get_token.py` again to get a new token
 2. Go to the integration in HA, click **Reconfigure**
-3. Paste the new token
+3. Paste the new token (and refresh token for auto-renewal)
 
 ## How it Works
 
