@@ -31,8 +31,11 @@ from playwright.async_api import async_playwright
 import aiohttp
 
 # Philips OAuth configuration
-CLIENT_ID = "-XsK7O6iEkLml77yDGDUi0ku"
-CLIENT_SECRET = "V34BlAhuilIdOx0Imo16rGQ2"
+# These are PUBLIC app credentials embedded in the Philips Air+ mobile app.
+# They are NOT personal secrets - they are required for the OAuth2 PKCE flow
+# and can be extracted by anyone from the published app binary.
+CLIENT_ID = "-XsK7O6iEkLml77yDGDUi0ku"  # nosemgrep: generic-api-key
+CLIENT_SECRET = "V34BlAhuilIdOx0Imo16rGQ2"  # noqa: S105  # nosec  # Public app credential
 TOKEN_URL = "https://cdc.accounts.home.id/oidc/op/v1.0/4_JGZWlP8eQHpEqkvQElolbA/oauth/token"
 REDIRECT_URI = "com.philips.air://loginredirect"
 AUTH_URL = "https://cdc.accounts.home.id/oidc/op/v1.0/4_JGZWlP8eQHpEqkvQElolbA/authorize"
