@@ -45,12 +45,6 @@ class PhilipsAirFanEntity(CoordinatorEntity[PhilipsAirFanCoordinator], FanEntity
         | FanEntityFeature.PRESET_MODE
         | FanEntityFeature.OSCILLATE
     )
-
-    @property
-    def supported_features(self) -> int:
-        """Return supported features - explicit to ensure TURN_ON/OFF are included."""
-        # FanEntityFeature values: TURN_ON=64, TURN_OFF=128, OSCILLATE=2, PRESET_MODE=8
-        return 64 | 128 | 2 | 8  # = 202
     _attr_preset_modes = list(PRESET_MODES.keys())
 
     def __init__(self, coordinator: PhilipsAirFanCoordinator, entry: ConfigEntry) -> None:
