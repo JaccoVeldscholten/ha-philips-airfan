@@ -54,4 +54,4 @@ OSCILLATION_ON = 90
 OSCILLATION_OFF = 0
 OSCILLATION_REPORTED_ON = 23040  # 90 * 256
 
-PLATFORMS = ["fan", "sensor"]
+PLATFORMS = ["fan", "number", "sensor"]

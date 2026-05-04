@@ -3,16 +3,18 @@
     "step": {
       "user": {
         "title": "Philips Air Ventilator",
-        "description": "Voer je Philips Air API-token in. Zie de documentatie voor instructies om een token te verkrijgen.",
+        "description": "Voer je Philips Air API-token in. Optioneel: voeg het OAuth refresh token toe voor automatische vernieuwing. Draai get_token.py om beide te verkrijgen.",
         "data": {
-          "token": "API Token (JWT)"
+          "token": "API Token (JWT)",
+          "refresh_token": "Refresh Token (optioneel, voor automatische vernieuwing)"
         }
       },
       "reauth_confirm": {
         "title": "Opnieuw inloggen bij Philips Air Ventilator",
-        "description": "Je token is verlopen. Voer een nieuw token in.",
+        "description": "Je token is verlopen. Voer een nieuw token in. Voeg een refresh token toe voor automatische vernieuwing.",
         "data": {
-          "token": "Nieuw API Token (JWT)"
+          "token": "Nieuw API Token (JWT)",
+          "refresh_token": "Refresh Token (optioneel, voor automatische vernieuwing)"
         }
       }
     },
@@ -27,6 +29,9 @@
     }
   },
   "entity": {
+    "number": {
+      "timer": { "name": "Timer" }
+    },
     "sensor": {
       "temperature": { "name": "Temperatuur" },
       "timer_remaining": { "name": "Timer resterend" },

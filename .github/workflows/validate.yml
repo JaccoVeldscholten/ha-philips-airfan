@@ -1,0 +1,52 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install ruff
+
+      - name: Lint with ruff
+        run: ruff check custom_components/
+
+      - name: Validate manifest
+        run: python -c "import json; json.load(open('custom_components/philips_airfan/manifest.json'))"
+
+      - name: Validate strings
+        run: python -c "import json; json.load(open('custom_components/philips_airfan/strings.json'))"
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest
+          pip install -e . 2>/dev/null || true
+
+      - name: Run tests
+        run: |
+          cd tests && python -m pytest test_philips_airfan.py -v --import-mode=importlib
+        env:
+          PYTHONPATH: ${{ github.workspace }}

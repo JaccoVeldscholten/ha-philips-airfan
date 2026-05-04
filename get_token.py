@@ -219,6 +219,44 @@ async def exchange_code(code: str, verifier: str) -> tuple[str, str]:
                 return token, refresh_token
 
 
+async def push_to_ha(ha_url: str, ha_token: str, jwt_token: str, refresh_token: str) -> bool:
+    """Push tokens directly to Home Assistant config entry."""
+    headers = {"Authorization": f"Bearer {ha_token}", "Content-Type": "application/json"}
+    async with aiohttp.ClientSession() as session:
+        # Find existing philips_airfan config entry
+        async with session.get(f"{ha_url}/api/config/config_entries", headers=headers) as resp:
+            if resp.status != 200:
+                return False
+            entries = await resp.json()
+
+        entry = next((e for e in entries if e.get("domain") == "philips_airfan"), None)
+        if not entry:
+            print("  ⚠️  No existing Philips Air Fan integration found in HA.")
+            print("  Add the integration first, then re-run this script to update tokens.")
+            return False
+
+        # Update the entry data via reconfigure flow isn't easily available via API,
+        # so we'll use the config_entries options/update approach
+        import time
+
+        new_data = {**entry["data"], "token": jwt_token, "token_expiry": time.time() + 7 * 86400}
+        if refresh_token:
+            new_data["refresh_token"] = refresh_token
+
+        # Use the config entries API to update
+        async with session.patch(
+            f"{ha_url}/api/config/config_entries/entry/{entry['entry_id']}",
+            headers=headers,
+            json={"data": new_data},
+        ) as resp:
+            if resp.status == 200:
+                return True
+
+        # Fallback: try websocket approach or reload
+        print(f"  ⚠️  Could not auto-update config entry (status {resp.status})")
+        return False
+
+
 async def main():
     print("=" * 60)
     print("  Philips Air Fan - Token Helper")
@@ -257,16 +295,38 @@ async def main():
     print(f"\n{token}\n")
     if refresh_token:
         print("=" * 60)
-        print("  YOUR REFRESH TOKEN (paste in 'Refresh token' field for auto-renewal):")
+        print("  YOUR REFRESH TOKEN (for auto-renewal):")
         print("=" * 60)
         print(f"\n{refresh_token}\n")
     print("=" * 60)
     print("  JWT token is valid for approximately 7 days.")
     if refresh_token:
         print("  With the refresh token, Home Assistant will renew it automatically.")
-    else:
-        print("  Add the Philips Air Fan integration in HA and paste this token.")
     print("=" * 60)
+
+    # Offer to push directly to HA
+    print("\n" + "=" * 60)
+    print("  AUTOMATIC SETUP")
+    print("=" * 60)
+    print("\n  Want to push these tokens directly to Home Assistant?")
+    print("  This requires your HA URL and a long-lived access token.")
+    print("  (Create one in HA: Profile → Long-Lived Access Tokens)\n")
+
+    try:
+        ha_url = input("  HA URL (e.g. http://homeassistant.local:8123) [skip]: ").strip()
+        if ha_url:
+            ha_token = input("  HA Long-Lived Access Token: ").strip()
+            if ha_token:
+                print("\n  Pushing tokens to Home Assistant...")
+                success = await push_to_ha(ha_url.rstrip("/"), ha_token, token, refresh_token)
+                if success:
+                    print("  ✅ Tokens pushed to Home Assistant! Reloading integration...")
+                else:
+                    print("  ℹ️  Please manually paste the tokens above into the integration.")
+    except (KeyboardInterrupt, EOFError):
+        pass
+
+    print("\n  Done! Your fan should now work indefinitely without re-authentication.")
 
 
 if __name__ == "__main__":

@@ -147,7 +147,8 @@ class PhilipsAirFanCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _ensure_valid_token(self) -> None:
         """Check if JWT is near expiry and refresh if possible."""
         if not self._refresh_token:
-            return  # No refresh token available, can't auto-refresh
+            _LOGGER.debug("No refresh token available, cannot auto-refresh")
+            return
 
         now = time.time()
         if self._token_expiry and (self._token_expiry - now) > TOKEN_REFRESH_MARGIN:

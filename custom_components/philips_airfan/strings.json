@@ -29,6 +29,9 @@
     }
   },
   "entity": {
+    "number": {
+      "timer": { "name": "Timer" }
+    },
     "sensor": {
       "temperature": { "name": "Temperature" },
       "timer_remaining": { "name": "Timer remaining" },
