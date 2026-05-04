@@ -22,9 +22,11 @@ Other Philips fans using the Air+ app with Fogcloud/AWS IoT backend should work 
 
 - ✅ **Fan control** — Turn on/off, preset modes (Speed 1-3, Sleep, Natural Wind)
 - ✅ **Oscillation** — Enable/disable oscillation
+- ✅ **Timer control** — Set fan timer (1-12 hours) via slider
 - ✅ **Temperature sensor** — Built-in room temperature reading
 - ✅ **Timer** — Timer remaining sensor
 - ✅ **Real-time updates** — Uses MQTT push via AWS IoT (no polling!)
+- ✅ **Automatic token renewal** — Never re-authenticate (with refresh token)
 - ✅ **Diagnostic sensors** — All raw device properties exposed
 
 ## Installation
@@ -44,9 +46,9 @@ Other Philips fans using the Air+ app with Fogcloud/AWS IoT backend should work 
 
 ## Configuration
 
-### Step 1: Get your API token
+### Step 1: Get your API token (one-time setup)
 
-The integration requires a JWT token from the Philips Air cloud API. The token is valid for **approximately 7 days**.
+The integration requires a JWT token and a refresh token from the Philips Air cloud API. **You only need to do this once** — the refresh token enables permanent automatic renewal.
 
 #### Token Helper Script
 
@@ -61,21 +63,22 @@ python3 get_token.py
 
 This will:
 1. Open a browser window
-2. You log in with your Philips Air+ account
-3. The script automatically obtains and prints your JWT token **and refresh token**
+2. You log in with your Philips Air+ account (one time only!)
+3. The script automatically obtains your JWT token **and refresh token**
+4. Optionally pushes the tokens directly to your Home Assistant instance
 
-That's it! Copy both tokens and paste them into Home Assistant. The refresh token enables automatic renewal so you never have to do this again.
+**Important:** Make sure to copy the **refresh token** — this is what allows the integration to renew itself automatically forever.
 
 ### Step 2: Add the integration
 
 1. Go to **Settings** → **Devices & Services** → **Add Integration**
 2. Search for "Philips Air Fan"
-3. Paste your JWT token
+3. Paste your JWT token **and refresh token**
 4. The integration will discover your device automatically
 
 ### Token Renewal
 
-**Automatic (recommended):** If you provide the refresh token during setup, the integration will automatically renew the JWT token before it expires. No manual intervention needed!
+**Automatic (recommended):** If you provide the refresh token during setup, the integration will automatically renew the JWT token before it expires. No manual intervention needed — your fan will keep working indefinitely!
 
 **Manual fallback:** If no refresh token is provided, or if automatic refresh fails:
 1. Run `get_token.py` again to get a new token
