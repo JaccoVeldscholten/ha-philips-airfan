@@ -13,21 +13,20 @@ Custom Home Assistant integration for **Philips Air+ connected fans** (CX3550 an
 
 | Model | Name | Status |
 |-------|------|--------|
-| CX3550 | Philips Series 3000i Fan | ✅ Tested |
-| CX5550 | Philips Series 5000i Fan | 🔄 Should work (untested) |
+| CX3550 | Philips Series 3000i Fan | Tested |
+| CX5550 | Philips Series 5000i Fan | Should work (untested) |
 
 Other Philips fans using the Air+ app with Fogcloud/AWS IoT backend should work too. If you have a different model, please open an issue!
 
 ## Features
 
-- ✅ **Fan control** — Turn on/off, preset modes (Speed 1-3, Sleep, Natural Wind)
-- ✅ **Oscillation** — Enable/disable oscillation
-- ✅ **Timer control** — Set fan timer (1-12 hours) via slider
-- ✅ **Temperature sensor** — Built-in room temperature reading
-- ✅ **Timer** — Timer remaining sensor
-- ✅ **Real-time updates** — Uses MQTT push via AWS IoT (no polling!)
-- ✅ **Automatic token renewal** — Never re-authenticate (with refresh token)
-- ✅ **Diagnostic sensors** — All raw device properties exposed
+- **Fan control** — Turn on/off, preset modes (Speed 1-3, Sleep, Natural Wind)
+- **Oscillation** — Enable/disable oscillation
+- **Timer control** — Set fan timer (1-12 hours) via slider
+- **Timer** — Timer remaining sensor
+- **Real-time updates** — Uses MQTT push via AWS IoT (no polling!)
+- **Automatic token renewal** — Never re-authenticate (with refresh token)
+- **Diagnostic sensors** — All raw device properties exposed
 
 ## Installation
 
