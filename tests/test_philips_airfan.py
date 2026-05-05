@@ -10,9 +10,14 @@ from urllib.parse import quote
 import pytest
 
 
+import os
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 def _load_module_directly(name: str, path: str):
     """Load a module by path without triggering package __init__."""
-    spec = importlib.util.spec_from_file_location(name, path)
+    spec = importlib.util.spec_from_file_location(name, os.path.join(_ROOT, path))
     mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
     spec.loader.exec_module(mod)

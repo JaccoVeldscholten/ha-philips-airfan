@@ -47,6 +47,6 @@ jobs:
 
       - name: Run tests
         run: |
-          cd tests && python -m pytest test_philips_airfan.py -v --import-mode=importlib
+          python -m pytest tests/test_philips_airfan.py -v
         env:
           PYTHONPATH: ${{ github.workspace }}

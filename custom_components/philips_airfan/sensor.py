@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
-    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
-    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTime
@@ -23,7 +21,6 @@ from .const import (
     PROP_OSCILLATION,
     PROP_POWER,
     PROP_SPEED,
-    PROP_STANDBY,
     PROP_STANDBY,
     PROP_TIMER_REMAIN,
     PROP_TIMER_SET,

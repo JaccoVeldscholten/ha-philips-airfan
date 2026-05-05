@@ -13,7 +13,6 @@ from urllib.parse import quote
 
 import aiohttp
 import websockets
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator

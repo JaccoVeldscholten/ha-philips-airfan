@@ -6,12 +6,10 @@ from typing import Any
 
 import aiohttp
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 
 from .const import (
     API_HOST,
-    APP_ID,
     CONF_DEVICE_ID,
     CONF_DEVICE_MODEL,
     CONF_DEVICE_NAME,
