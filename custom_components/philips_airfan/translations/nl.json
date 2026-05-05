@@ -33,14 +33,12 @@
       "timer": { "name": "Timer" }
     },
     "sensor": {
-      "temperature": { "name": "Temperatuur" },
       "timer_remaining": { "name": "Timer resterend" },
       "power_state": { "name": "Aan/uit status" },
       "mode_raw": { "name": "Modus (raw)" },
       "speed_level": { "name": "Snelheidsniveau" },
       "oscillation_raw": { "name": "Oscillatie (raw)" },
       "timer_setting": { "name": "Timer instelling" },
-      "display_brightness": { "name": "Displayhelderheid" },
       "standby_flag": { "name": "Standby status" }
     }
   }

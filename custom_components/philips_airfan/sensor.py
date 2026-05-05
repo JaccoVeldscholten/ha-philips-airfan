@@ -8,7 +8,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature, UnitOfTime
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -19,26 +19,18 @@ from .const import (
     CONF_DEVICE_MODEL,
     CONF_DEVICE_NAME,
     DOMAIN,
-    PROP_BRIGHTNESS,
     PROP_MODE,
     PROP_OSCILLATION,
     PROP_POWER,
     PROP_SPEED,
     PROP_STANDBY,
-    PROP_TEMPERATURE,
+    PROP_STANDBY,
     PROP_TIMER_REMAIN,
     PROP_TIMER_SET,
 )
 from .coordinator import PhilipsAirFanCoordinator
 
 MAIN_SENSORS: list[SensorEntityDescription] = [
-    SensorEntityDescription(
-        key=PROP_TEMPERATURE,
-        translation_key="temperature",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
     SensorEntityDescription(
         key=PROP_TIMER_REMAIN,
         translation_key="timer_remaining",
@@ -77,12 +69,6 @@ DIAGNOSTIC_SENSORS: list[SensorEntityDescription] = [
         translation_key="timer_setting",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:timer-cog-outline",
-    ),
-    SensorEntityDescription(
-        key=PROP_BRIGHTNESS,
-        translation_key="display_brightness",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:brightness-6",
     ),
     SensorEntityDescription(
         key=PROP_STANDBY,
